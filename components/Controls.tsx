@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import PlayerIcon from './icons/PlayerIcon';
 import TargetIcon from './icons/TargetIcon';
+import SoundOnIcon from './icons/SoundOnIcon';
+import SoundOffIcon from './icons/SoundOffIcon';
+import * as sound from '../services/soundService';
 
 type Difficulty = 'Easy' | 'Medium' | 'Hard' | 'Insane';
 type Theme = 'forest' | 'twilight';
@@ -15,6 +18,8 @@ interface ControlsProps {
   onNewMaze: () => void;
   onSolve: () => void;
   isBusy: boolean;
+  isMuted: boolean;
+  setIsMuted: (muted: boolean) => void;
 }
 
 const difficultySettings = {
@@ -27,11 +32,16 @@ const difficultySettings = {
 const AccordionItem: React.FC<{title: string, children: React.ReactNode, defaultOpen?: boolean}> = ({ title, children, defaultOpen=false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
+    const handleToggle = () => {
+      sound.playClick();
+      setIsOpen(!isOpen);
+    }
+
     return (
         <div className="border-t border-[rgb(var(--text-primary)/0.2)]">
             <button 
                 className="w-full flex justify-between items-center py-4 text-left themed-text-primary"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 aria-expanded={isOpen}
             >
                 <h2 className="text-2xl font-bold">{title}</h2>
@@ -46,11 +56,10 @@ const AccordionItem: React.FC<{title: string, children: React.ReactNode, default
     );
 };
 
-const Controls: React.FC<ControlsProps> = ({ mazeSize, setMazeSize, difficulty, setDifficulty, theme, setTheme, onNewMaze, onSolve, isBusy }) => {
+const Controls: React.FC<ControlsProps> = ({ mazeSize, setMazeSize, difficulty, setDifficulty, theme, setTheme, onNewMaze, onSolve, isBusy, isMuted, setIsMuted }) => {
   const handleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     setMazeSize({ width: value, height: value });
-    // Find matching difficulty
     const newDifficulty = Object.entries(difficultySettings).find(([, size]) => size === value)?.[0] as Difficulty | undefined;
     if (newDifficulty) {
       setDifficulty(newDifficulty);
@@ -58,14 +67,34 @@ const Controls: React.FC<ControlsProps> = ({ mazeSize, setMazeSize, difficulty, 
   };
   
   const handleDifficultyChange = (newDifficulty: Difficulty) => {
+    sound.playClick();
     setDifficulty(newDifficulty);
     const newSize = difficultySettings[newDifficulty];
     setMazeSize({ width: newSize, height: newSize });
   };
+  
+  const handleThemeChange = (newTheme: Theme) => {
+    sound.playClick();
+    setTheme(newTheme);
+  };
+  
+  const handleSoundToggle = () => {
+    setIsMuted(!isMuted);
+    sound.playClick();
+  };
 
   return (
     <div className="flex flex-col space-y-6">
-      <h1 className="text-4xl font-bold text-center themed-text-primary">Enchanted Forest</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-4xl font-bold text-center themed-text-primary">Enchanted Forest</h1>
+        <button 
+            onClick={handleSoundToggle}
+            className="p-2 rounded-full themed-bg-primary hover:bg-[rgb(var(--text-primary)/0.1)] transition-colors"
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+        >
+            {isMuted ? <SoundOffIcon className="w-6 h-6 themed-text-secondary" /> : <SoundOnIcon className="w-6 h-6 themed-text-primary" />}
+        </button>
+      </div>
       
       <AccordionItem title="Difficulty" defaultOpen={true}>
         <div className="grid grid-cols-2 gap-2">
@@ -104,16 +133,16 @@ const Controls: React.FC<ControlsProps> = ({ mazeSize, setMazeSize, difficulty, 
       <AccordionItem title="Theme">
         <div className="grid grid-cols-2 gap-2">
             <button 
-                onClick={() => setTheme('forest')}
+                onClick={() => handleThemeChange('forest')}
                 className={`p-2 rounded-lg text-center transition-all duration-300 flex items-center justify-center space-x-2 ${theme === 'forest' ? 'bg-emerald-600 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}
             >
-                <div className="w-4 h-4 rounded-full bg-emerald-300"></div><span>Forest</span>
+                <div className="w-4 h-4 rounded-full bg-emerald-300 border border-emerald-500"></div><span>Forest</span>
             </button>
              <button 
-                onClick={() => setTheme('twilight')}
+                onClick={() => handleThemeChange('twilight')}
                 className={`p-2 rounded-lg text-center transition-all duration-300 flex items-center justify-center space-x-2 ${theme === 'twilight' ? 'bg-violet-500 text-white' : 'bg-neutral-800 text-neutral-200 hover:bg-neutral-700'}`}
             >
-                 <div className="w-4 h-4 rounded-full bg-violet-300"></div><span>Twilight</span>
+                 <div className="w-4 h-4 rounded-full bg-violet-300 border border-violet-500"></div><span>Twilight</span>
             </button>
         </div>
       </AccordionItem>
@@ -123,14 +152,14 @@ const Controls: React.FC<ControlsProps> = ({ mazeSize, setMazeSize, difficulty, 
         <button
           onClick={onNewMaze}
           disabled={isBusy}
-          className="w-full themed-accent-primary font-bold py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none themed-ring-accent-primary transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-stone-400 disabled:cursor-not-allowed disabled:transform-none"
+          className="w-full themed-accent-primary font-bold py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none themed-ring-accent-primary transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-100 disabled:bg-stone-400 disabled:cursor-not-allowed disabled:transform-none"
         >
           {isBusy ? 'Working...' : 'New Maze'}
         </button>
         <button
           onClick={onSolve}
           disabled={isBusy}
-          className="w-full themed-accent-secondary text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none themed-ring-accent-secondary transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-stone-400 disabled:cursor-not-allowed disabled:transform-none"
+          className="w-full themed-accent-secondary text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 focus:outline-none themed-ring-accent-secondary transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-100 disabled:bg-stone-400 disabled:cursor-not-allowed disabled:transform-none"
         >
           {isBusy ? 'Solving...' : 'Solve Maze'}
         </button>
@@ -141,9 +170,9 @@ const Controls: React.FC<ControlsProps> = ({ mazeSize, setMazeSize, difficulty, 
           <p className="flex items-center space-x-1">
             <span>Use your</span>
             <span className="font-bold">arrow keys</span>
-            <span>to navigate the player (</span>
+            <span>or the on-screen controls to navigate the player (</span>
             <PlayerIcon className="inline h-5 w-5 themed-player-color" />
-            <span>) from the start to the target (</span>
+            <span>) to the target (</span>
             <TargetIcon className="inline h-5 w-5 themed-target-color" />
             <span>).</span>
           </p>

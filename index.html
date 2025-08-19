@@ -21,6 +21,8 @@
         --maze-bg: 209 250 229; /* emerald-100 */
         --solution-path: 14 165 233; /* sky-500 */
         --player-color: 244 63 94; /* rose-500 */
+        --gradient-start: 110 231 183; /* emerald-300 */
+        --gradient-end: 56 189 248; /* sky-400 */
       }
 
       html[data-theme='twilight'] {
@@ -34,14 +36,25 @@
         --maze-bg: 41 37 36; /* stone-800 */
         --solution-path: 236 72 153; /* pink-500 */
         --player-color: 52 211 153; /* emerald-400 */
+        --gradient-start: 49 46 129; /* indigo-900 */
+        --gradient-end: 131 24 67; /* fuchsia-900 */
       }
 
       body {
         font-family: 'Quicksand', sans-serif;
-        background-color: rgb(var(--bg-primary));
         color: rgb(var(--text-primary));
         transition: background-color 0.5s ease, color 0.5s ease;
+        background: linear-gradient(-45deg, rgb(var(--gradient-start)), rgb(var(--gradient-end)), rgb(var(--gradient-start)), rgb(var(--gradient-end)));
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
       }
+
+      @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
       h1, h2, h3 {
         font-family: 'Playfair Display', serif;
       }
@@ -57,6 +70,10 @@
       .themed-solution-path { background-color: rgb(var(--solution-path)); }
       .themed-player-color { color: rgb(var(--player-color)); }
       .themed-target-color { color: rgb(var(--accent-primary)); }
+      .themed-border-accent { border-color: rgb(var(--accent-primary)); }
+      .themed-fill-accent { fill: rgb(var(--accent-primary)); }
+      .themed-stroke-accent { stroke: rgb(var(--accent-primary)); }
+
 
       .themed-ring-accent-primary:focus {
         --tw-ring-color: rgb(var(--accent-primary) / 0.5);
@@ -78,7 +95,8 @@
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
     "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1"
+    "react": "https://esm.sh/react@^19.1.1",
+    "tone": "https://esm.sh/tone@^15.0.4"
   }
 }
 </script>
